@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Warehouse Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- LOCK -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-icon">🔐</div>
+  <div class="lock-title">WAREHOUSE INVENTORY</div>
+  <div class="lock-sub">Enter your username and password to continue</div>
+  <input class="lock-input" id="lockUser" type="text" placeholder="username" autocomplete="off" autocorrect="off" autocapitalize="off">
+  <input class="lock-input" id="lockInput" type="password" placeholder="••••••••" autocomplete="off">
+  <button class="lock-btn" id="lockBtn" data-action="unlock-app">Unlock</button>
+  <div class="lock-error" id="lockError"></div>
+</div>
+
+<!-- MAIN APP -->
+<div id="appShell" style="display:none">
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">
+      <div class="logo-icon">📦</div>
+      <div><div class="logo-text">WAREHOUSE</div><div class="logo-sub">Inventory System</div></div>
+    </div>
+    <div class="header-actions">
+      <div class="role-badge" id="roleBadge">—</div>
+      <button class="order-btn hidden" id="orderModeBtn" data-action="toggle-order-mode">🧾 Outbound</button>
+      <button class="order-btn hidden" id="inboundModeBtn" data-action="toggle-inbound-mode">📥 Inbound</button>
+      <button class="order-btn capture-btn hidden" id="outboundCaptureBtn" data-action="toggle-outbound-capture-mode">✚ Outbound Mode: OFF</button>
+      <div class="undo-controls hidden" id="undoControls">
+        <select class="undo-select" id="undoSelect" aria-label="Choose action to undo"></select>
+        <button class="undo-btn" id="undoBtn" data-action="undo-last-action">↶ Undo</button>
+      </div>
+      <button class="queue-btn hidden" id="queueBtn" data-action="flush-queue-now">Queue 0</button>
+      <button class="pdf-btn" id="pdfBtn" data-action="export-pdf">📄 PDF</button>
+      <button class="sync-btn" id="syncBtn" data-action="sync-now"><span class="sync-icon">↻</span> Refresh</button>
+    </div>
+  </div>
+  <div class="stats-strip">
+    <div class="stat-pill">SKUs <span id="statTotal">—</span></div>
+    <div class="stat-pill">In Stock <span id="statInStock">—</span></div>
+    <div class="stat-pill">Low <span id="statLow">—</span></div>
+    <div class="stat-pill">Out <span id="statOut">—</span></div>
+    <div class="last-sync"><div class="sync-dot" id="syncDot"></div><span id="syncTime">—</span></div>
+  </div>
+  <div class="order-mode-banner hidden" id="orderModeBanner">Order Mode Active</div>
+</div>
+
+<div id="inventoryWorkspace">
+<div class="search-bar">
+  <div class="search-input-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" id="searchInput" type="text" placeholder="Search size, type, location…" autocomplete="off" autocorrect="off" autocapitalize="off">
+    <button class="clear-btn" id="clearBtn" data-action="clear-search">✕</button>
+  </div>
+  <button class="filter-toggle-btn" id="filterToggleBtn" data-action="toggle-filter-panel">⚙ Filters <span id="filterBadge"></span></button>
+</div>
+
+<div class="category-strip" id="typeChips">
+  <div class="fp-chip active" id="typeAllChip" data-type="ALL" data-action="set-type-filter">All</div>
+</div>
+
+<div class="filter-panel" id="filterPanel">
+  <div class="fp-section">
+    <div class="fp-label">Warehouse</div>
+    <div class="fp-chips" id="whChips">
+      <div class="fp-chip active-blue" id="whAllChip" data-action="set-wh-filter" data-value="ALL">All</div>
+    </div>
+  </div>
+  <div class="fp-section">
+    <div class="fp-label">Floor</div>
+    <div class="fp-chips" id="flChips">
+      <div class="fp-chip active-blue" id="flAllChip" data-action="set-floor-filter" data-value="ALL">All</div>
+    </div>
+  </div>
+  <div class="fp-section">
+    <div class="fp-label">Stock Status</div>
+    <div class="fp-chips">
+      <div class="fp-chip active-blue" id="sfAll" data-action="set-stock-filter" data-value="ALL">All</div>
+      <div class="fp-chip" id="sfIn" data-action="set-stock-filter" data-value="IN">In Stock</div>
+      <div class="fp-chip" id="sfLow" data-action="set-stock-filter" data-value="LOW">Low</div>
+      <div class="fp-chip" id="sfOut" data-action="set-stock-filter" data-value="OUT">Out of Stock</div>
+    </div>
+  </div>
+  <div class="fp-section">
+    <div class="fp-label">Packet Type</div>
+    <div class="fp-chips">
+      <div class="fp-chip active-blue" id="ptAll" data-action="set-packet-filter" data-value="ALL">All</div>
+      <div class="fp-chip" id="ptBox" data-action="set-packet-filter" data-value="Box">📦 Box</div>
+      <div class="fp-chip" id="ptJute" data-action="set-packet-filter" data-value="Jute Bag">🧺 Jute Bag</div>
+      <div class="fp-chip" id="ptPacket" data-action="set-packet-filter" data-value="Packet">🛍 Packet</div>
+    </div>
+  </div>
+  <div class="fp-section">
+    <div class="fp-label">Location &amp; Flags</div>
+    <div class="fp-row">
+      <input class="fp-input" id="locationInput" type="text" placeholder="e.g. 5,4">
+      <div class="fp-chip" id="attnChip" data-action="toggle-attention">⚠ Needs Attention</div>
+      <button class="fp-clear" id="clearAllFiltersBtn" data-action="clear-all-filters">Clear all</button>
+    </div>
+  </div>
+</div>
+
+<div class="results-bar">
+  <div class="results-count" id="resultsCount">Loading…</div>
+  <select class="sort-select" id="sortSelect">
+    <option value="stock-desc">Stock ↓</option>
+    <option value="stock-asc">Stock ↑</option>
+    <option value="size-asc">Size A→Z</option>
+    <option value="type-asc">Type A→Z</option>
+  </select>
+</div>
+
+<div class="config-notice" id="configNotice">
+  <div class="config-title">⚙ Setup Required</div>
+  <div class="config-item">Fill in CONFIG: <code>APPS_SCRIPT_URL</code></div>
+</div>
+<div class="error-state" id="errorState"><div class="error-title">⚠ Could not load data</div><div class="error-msg" id="errorMsg">—</div></div>
+<div class="loading-state" id="loadingState"><div class="loading-spinner"></div><div class="loading-text">Loading from Google Sheets…</div></div>
+<div class="inventory-list" id="inventoryList"></div>
+<div class="empty-state" id="emptyState"><div class="icon">🔎</div><p>No items found.<br>Try adjusting your search or filters.</p></div>
+</div>
+
+<div class="outbound-workspace hidden" id="outboundWorkspace">
+  <div class="outbound-shell">
+    <div class="outbound-head">
+      <div>
+        <div class="outbound-title">Outbound Workspace</div>
+        <div class="outbound-summary" id="outboundSummary">No lines in outbound queue.</div>
+      </div>
+      <div class="outbound-head-actions">
+        <button class="orders-refresh" id="outboundRefreshBtn" data-action="refresh-outbound-orders">Refresh</button>
+        <button class="commit-all-btn" id="outboundCommitAllBtn" data-action="commit-all-outbound">Commit All Ready</button>
+      </div>
+    </div>
+    <div class="outbound-service-notice hidden" id="outboundServiceNotice">
+      <span>Outbound module unavailable. Refresh to restore outbound actions.</span>
+      <button class="outbound-service-refresh" data-action="reload-page">Refresh</button>
+    </div>
+    <div class="outbound-tabs">
+      <button id="outTabDrafts" class="outbound-tab" data-action="set-outbound-tab" data-tab="drafts">Drafts</button>
+      <button id="outTabReady" class="outbound-tab active" data-action="set-outbound-tab" data-tab="ready">Ready</button>
+      <button id="outTabHistory" class="outbound-tab" data-action="set-outbound-tab" data-tab="history">History</button>
+    </div>
+    <div class="outbound-run-result hidden" id="outboundRunResult"></div>
+    <div id="outboundLinesWrap"></div>
+  </div>
+</div>
+
+<div class="outbound-workspace hidden" id="inboundWorkspace">
+  <div class="outbound-shell inbound-shell">
+    <div class="outbound-head inbound-head">
+      <div>
+        <div class="outbound-title inbound-title">Inbound Workspace</div>
+        <div class="outbound-summary inbound-summary" id="inboundSummary">No inbound lines.</div>
+      </div>
+      <div class="outbound-head-actions">
+        <button class="orders-refresh" id="inboundRefreshBtn" data-action="refresh-inbound-receipts">Refresh</button>
+        <button class="commit-all-btn" id="inboundPostAllBtn" data-action="post-all-inbound">Post All Drafts</button>
+      </div>
+    </div>
+    <div class="outbound-service-notice hidden" id="inboundServiceNotice">
+      <span>Inbound module unavailable. Refresh to restore inbound actions.</span>
+      <button class="outbound-service-refresh inbound-service-refresh" data-action="reload-page">Refresh</button>
+    </div>
+    <div class="inbound-create-box" data-action="stop-propagation">
+      <div class="inbound-create-grid">
+        <input id="inboundTypeInput" type="text" placeholder="Type">
+        <input id="inboundSizeInput" type="text" placeholder="Size">
+        <input id="inboundDetailsInput" type="text" placeholder="Description / Details (optional)">
+        <select id="inboundPacketInput">
+          <option value="Box">Box</option>
+          <option value="Jute Bag">Jute Bag</option>
+          <option value="Packet">Packet</option>
+        </select>
+        <select id="inboundWarehouseInput"></select>
+        <select id="inboundFloorInput"></select>
+        <input id="inboundLocationInput" type="text" placeholder="Location">
+        <input id="inboundQtyInput" type="number" min="1" step="1" value="1" placeholder="Received qty">
+        <input id="inboundDateInput" type="date">
+        <input id="inboundQpuInput" type="number" min="0" step="0.1" placeholder="Qty per unit (optional)">
+        <select id="inboundUnitInput">
+          <option value="">Unit</option>
+          <option value="kg">kg</option>
+          <option value="pcs">pcs</option>
+        </select>
+        <input id="inboundLooseInput" type="number" min="0" step="0.1" value="0" placeholder="Loose qty">
+        <input id="inboundNotesInput" type="text" placeholder="Notes (optional)">
+      </div>
+      <div class="inbound-create-actions">
+        <button id="inboundCreateBtn" data-action="create-inbound-draft">Create Draft</button>
+      </div>
+    </div>
+    <div class="outbound-tabs inbound-tabs">
+      <button id="inTabDrafts" class="outbound-tab active" data-action="set-inbound-tab" data-tab="drafts">Drafts</button>
+      <button id="inTabPosted" class="outbound-tab" data-action="set-inbound-tab" data-tab="posted">Posted</button>
+      <button id="inTabHistory" class="outbound-tab" data-action="set-inbound-tab" data-tab="history">History</button>
+    </div>
+    <div class="outbound-run-result hidden" id="inboundRunResult"></div>
+    <div id="inboundLinesWrap"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" data-action="close-modal-bg">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modalType">—</div>
+      <button class="modal-close" id="modalCloseBtn" data-action="close-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-size" id="modalSize">—</div>
+      <div class="modal-packet" id="modalPacket">—</div>
+      <div class="modal-total">
+        <div class="modal-total-row">
+          <div>
+            <div class="modal-total-label">Total Stock</div>
+            <div class="modal-total-sub" id="modalLocCount">—</div>
+          </div>
+          <div class="modal-total-value" id="modalTotalStock">—</div>
+        </div>
+        <div class="modal-qty-total" id="modalQtyTotal" style="display:none">
+          <div class="modal-qty-total-label">Total Quantity</div>
+          <div id="modalQtyTotalValue">—</div>
+        </div>
+      </div>
+      <div class="locations-label">Stock by Warehouse &amp; Location</div>
+      <div id="locationRows"></div>
+      <div class="modal-notes" id="modalNotes">
+        <div class="modal-notes-label">⚠ Sheet Notes</div>
+        <div id="modalNotesText">—</div>
+      </div>
+      <div class="comments-section">
+        <div class="comments-label">Comments</div>
+        <div class="comments-list" id="commentsList"></div>
+        <div class="comment-input-wrap">
+          <input class="comment-author-input" id="commentAuthor" type="text" placeholder="Your name" autocomplete="off">
+          <textarea class="comment-textarea" id="commentText" placeholder="Add a comment or flag for attention…" rows="3"></textarea>
+          <button class="comment-submit-btn" id="commentSubmitBtn" data-action="submit-comment">💬 Add Comment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end appShell -->
+<div class="print-view" id="printView"></div>
+<div class="toast" id="toast"></div>
+
+<script src="foundation-utils.js"></script>
+<script src="auth-utils.js"></script>
+<script src="data-utils.js"></script>
+<script src="state-manager.js"></script>
+<script src="api-client.js"></script>
+<script src="sync-service.js"></script>
+<script src="outbound-service.js"></script>
+<script src="inbound-service.js"></script>
+<script src="comments-service.js"></script>
+<script src="undo-service.js"></script>
+<script src="comments-renderer.js"></script>
+<script src="undo-renderer.js"></script>
+<script src="filter-renderer.js"></script>
+<script src="outbound-renderer.js"></script>
+<script src="inbound-renderer.js"></script>
+<script src="modal-renderer.js"></script>
+<script src="event-router.js"></script>
+<script src="runtime-config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
