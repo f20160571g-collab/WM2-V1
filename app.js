@@ -7,7 +7,7 @@ const WM2_RUNTIME_CONFIG = (typeof window !== 'undefined' && window.WM2_RUNTIME_
 
 const CONFIG = {
   ENV_NAME:            String(WM2_RUNTIME_CONFIG.ENV_NAME || 'production').trim().toLowerCase(),
-  APPS_SCRIPT_URL:     String(WM2_RUNTIME_CONFIG.APPS_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbwcuEVIltrQDeZK2J40wKjKkA8ms3r9gZHBX4UKEHTIfdxyvcbzAiEXiOH-rcCBhmfO/exec").trim(),
+  APPS_SCRIPT_URL:     String(WM2_RUNTIME_CONFIG.APPS_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbxtJKGsyPfV1RIXUZAqOwjk5XZa75l7RS5JsP1k67iBn35TrGR8zVKDwtCNMfLASkZR/exec").trim(),
 
   SHEET_NAME:          "Consolidated(Man)",
   COMMENTS_SHEET_NAME: "Comments",
