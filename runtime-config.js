@@ -9,6 +9,6 @@
 
   global.WM2_RUNTIME_CONFIG = Object.assign({
     ENV_NAME: 'production',
-    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbx9DhejTnzmXsQToVBzqDbQx1nSlkfN79WvxNuCWaArOy49GYwNrCzMfDoLSORxxr9f/exec',
+    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxtJKGsyPfV1RIXUZAqOwjk5XZa75l7RS5JsP1k67iBn35TrGR8zVKDwtCNMfLASkZR/exec',
   }, existing);
 })(typeof window !== 'undefined' ? window : this);
